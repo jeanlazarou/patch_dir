@@ -1,6 +1,31 @@
 require 'stringio'
 require 'fileutils'
 
+def copy_dir src_dir, to_dir
+
+  Dir["#{src_dir}/*"].each do |item|
+  
+    if File.directory?(item)
+      copy_dir item, to_dir
+    else
+      copy_file item, to_dir
+    end
+
+  end
+  
+end
+
+def copy_file src, to_dir
+
+  dest = File.join(to_dir, src)
+  
+  puts "copy #{src} to #{dest}"
+
+  FileUtils.makedirs File.dirname(dest)
+  FileUtils.copy src, dest
+
+end
+
 def fail msg
   
   $stderr.puts msg
@@ -8,9 +33,9 @@ def fail msg
   
   $stderr.puts "Usage: ruby #{File.basename($0)} (git|input-file) output-dir"
   $stderr.puts 
-  $stderr.puts "  Copy all the files read from the first agument (input-file) to"
-  $stderr.puts "  the given output directory (output-dir). Create the same"
-  $stderr.puts "  directory structure."
+  $stderr.puts "  Copy all the files or directories read from the first agument"
+  $stderr.puts "  (input-file) to the given output directory (output-dir)."
+  $stderr.puts "  Create the same directory structure."
   $stderr.puts 
   $stderr.puts "  Alternatively checks git status (using: git status -s) to"
   $stderr.puts "  to find the files to copy"
@@ -45,15 +70,16 @@ else
   
 end
 
+to_dir = ARGV[1]
+
 input.each do |line|
   
   src = line.chomp
   
-  dest = File.join(ARGV[1], src)
-  
-  puts "copy #{src} to #{dest}"
-
-  FileUtils.makedirs File.dirname(dest)
-  FileUtils.copy src, dest
+  if File.directory?(src)
+    copy_dir src, to_dir
+  else
+    copy_file src, to_dir
+  end
   
 end
